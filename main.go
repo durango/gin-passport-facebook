@@ -14,9 +14,9 @@ const KeyNamespace string = "gin-passport-facebook-profile"
 
 const ProfileUrl string = "https://graph.facebook.com/v2.2/me?fields=id,name,email,picture,first_name,last_name"
 
-var passportOauth *oauth2.Options
+var passportOauth *oauth2.Config
 
-func Routes(oauth *oauth2.Options, r *gin.RouterGroup) {
+func Routes(oauth *oauth2.Config, r *gin.RouterGroup) {
   passportOauth = oauth
 
   r.GET("/login", func(c *gin.Context) {
@@ -24,8 +24,8 @@ func Routes(oauth *oauth2.Options, r *gin.RouterGroup) {
   })
 }
 
-func Login(oauth *oauth2.Options, c *gin.Context) {
-  url := oauth.AuthCodeURL("", "", "")
+func Login(oauth *oauth2.Config, c *gin.Context) {
+  url := oauth.AuthCodeURL("")
   c.Redirect(http.StatusFound, url)
 }
 
@@ -50,7 +50,8 @@ func getProfile(c *gin.Context) {
   opts := passportOauth
   code := c.Request.Form.Get("code")
 
-  t, err := opts.NewTransportFromCode(code)
+  t, err := opts.Exchange(c, code)
+
   // most likely already authenticated / all errors will return `t` as nil
   if t == nil {
     c.Redirect(301, "/")
@@ -60,7 +61,7 @@ func getProfile(c *gin.Context) {
     return
   }
 
-  client := http.Client{Transport: t}
+  client := opts.Client(c, t)
 
   resp, err := client.Get(ProfileUrl)
   if err != nil {

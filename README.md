@@ -5,25 +5,23 @@ Gin middleware for obtaining common Facebook profile information. I don't person
 ## Example
 
 ```go
+package main
+
 import (
   "github.com/gin-gonic/gin"
-
   "golang.org/x/oauth2"
-  "golang.org/x/oauth2/google"
-
+  "golang.org/x/oauth2/facebook"
   "github.com/durango/gin-passport-facebook"
 )
 
 func main() {
-  opts, _ := oauth2.New(
-    oauth2.Client("ClientId", "YourSecretKey"),
-    oauth2.RedirectURL("Your redirect URL"),
-    oauth2.Scope("public_profile", "email"),
-    oauth2.Endpoint(
-      "https://www.facebook.com/dialog/oauth",
-      "https://graph.facebook.com/oauth/access_token",
-    ),
-  )
+  opts := &oauth2.Config{
+    RedirectURL:  "http://localhost:8080/auth/facebook/callback",
+    ClientID:     "CLIENT_ID",
+    ClientSecret: "CLIENT_SECRET",
+    Scopes:       []string{"email", "public_profile"},
+    Endpoint:     facebook.Endpoint,
+  }
 
   router := gin.Default()
 
@@ -42,5 +40,7 @@ func main() {
 
     c.String(200, "Got it!")
   })
+
+  router.Run()
 }
 ```
